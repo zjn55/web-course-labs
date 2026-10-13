@@ -34,6 +34,24 @@
       cursor: pointer;
     }
     #addBtn:hover { background: #357abd; }
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .filter-row button {
+      padding: 4px 12px;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .filter-row button.active {
+      background: #4a90d9;
+      color: #fff;
+      border-color: #4a90d9;
+    }
     #todoList {
       list-style: none;
       padding: 0;
@@ -70,6 +88,12 @@
   <div class="add-row">
     <input type="text" id="todoInput" placeholder="请输入待办事项">
     <button id="addBtn">添加</button>
+  </div>
+
+  <div class="filter-row">
+    <button data-filter="all" class="active">全部</button>
+    <button data-filter="active">未完成</button>
+    <button data-filter="done">已完成</button>
   </div>
 
   <ul id="todoList"></ul>
@@ -115,6 +139,15 @@
       render();
     }
 
+    // ===== ④.5 视图状态切换：不需要 save()，刷新回到默认 all =====
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll('.filter-row button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === f);
+      });
+      render();
+    }
+
     // ===== ⑤ render：根据 todos 整表重画 =====
     function render() {
       list.innerHTML = '';
@@ -156,6 +189,11 @@
     });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') addBtn.click();
+    });
+
+    // 筛选按钮事件
+    document.querySelectorAll('.filter-row button').forEach(btn => {
+      btn.addEventListener('click', () => setFilter(btn.dataset.filter));
     });
 
     // 启动时先渲染一次
