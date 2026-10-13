@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo 列表</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    h1 { font-size: 24px; }
+    .add-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    #todoInput {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #addBtn {
+      padding: 8px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 4px;
+      background: #4a90d9;
+      color: #fff;
+      cursor: pointer;
+    }
+    #addBtn:hover { background: #357abd; }
+    #todoList { padding-left: 22px; }
+    #todoList li {
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Todo 列表</h1>
+
+  <div class="add-row">
+    <input type="text" id="todoInput" placeholder="请输入待办事项">
+    <button id="addBtn">添加</button>
+  </div>
+
+  <ul id="todoList"></ul>
+
+  <script>
+    const input = document.getElementById('todoInput');
+    const btn   = document.getElementById('addBtn');
+    const list  = document.getElementById('todoList');
+
+    // V1 基线版：直接操作 DOM，没有数据层，刷新即丢
+    btn.addEventListener('click', function () {
+      const text = input.value.trim();
+      if (text === '') return;
+
+      const li = document.createElement('li');
+      li.textContent = text;
+      list.appendChild(li);
+      input.value = '';
+    });
+  </script>
+</body>
+</html>
