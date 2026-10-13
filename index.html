@@ -131,6 +131,13 @@
       save();
       render();
     }
+
+    // 脱离 AI 小改：删除所有已完成任务（控制台调用：clearCompleted()）
+    function clearCompleted() {
+      todos = todos.filter(t => !t.completed);
+      save();
+      render();
+    }
     function toggleTodo(id) {
       todos = todos.map(t =>
         t.id === id ? { ...t, completed: !t.completed } : t
