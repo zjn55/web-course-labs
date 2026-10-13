@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Todo 列表</title>
+  <title>Todo 列表 V2.0 数据驱动</title>
   <style>
     body {
       font-family: "Microsoft YaHei", sans-serif;
@@ -34,10 +34,51 @@
       cursor: pointer;
     }
     #addBtn:hover { background: #357abd; }
-    #todoList { padding-left: 22px; }
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .filter-row button {
+      padding: 4px 12px;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .filter-row button.active {
+      background: #4a90d9;
+      color: #fff;
+      border-color: #4a90d9;
+    }
+    #todoList {
+      list-style: none;
+      padding: 0;
+    }
     #todoList li {
-      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
       font-size: 15px;
+      background: #f7f8fa;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #todoList li.done span.text {
+      text-decoration: line-through;
+      color: #999;
+    }
+    #todoList li .del {
+      margin-left: auto;
+      border: none;
+      background: transparent;
+      color: #c0392b;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 4px;
     }
   </style>
 </head>
@@ -49,23 +90,121 @@
     <button id="addBtn">添加</button>
   </div>
 
+  <div class="filter-row">
+    <button data-filter="all" class="active">全部</button>
+    <button data-filter="active">未完成</button>
+    <button data-filter="done">已完成</button>
+  </div>
+
   <ul id="todoList"></ul>
 
   <script>
-    const input = document.getElementById('todoInput');
-    const btn   = document.getElementById('addBtn');
-    const list  = document.getElementById('todoList');
+    // ===== ① 存储键名 & DOM 引用 =====
+    const KEY   = 'todos';
+    const list  = document.querySelector('#todoList');
+    const input = document.querySelector('#todoInput');
+    const addBtn = document.querySelector('#addBtn');
 
-    // V1 基线版：直接操作 DOM，没有数据层，刷新即丢
-    btn.addEventListener('click', function () {
+    // ===== ② 单一数据源：todos 是任务状态，filter 是视图状态 =====
+    let todos  = load();   // 启动时从 localStorage 恢复
+    let filter = 'all';    // all / done / active
+
+    // ===== ③ 持久化：save 写、load 读 =====
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(todos));
+    }
+    function load() {
+      const raw = localStorage.getItem(KEY);
+      if (raw === null) return [];
+      return JSON.parse(raw);
+    }
+
+    // ===== ④ 三个操作：改数据 → save → render（不改原数组） =====
+    function addTodo(text) {
+      const todo = { id: Date.now(), text, completed: false };
+      todos = [...todos, todo];          // 展开生成新数组
+      save();
+      render();
+    }
+    function removeTodo(id) {
+      todos = todos.filter(t => t.id !== id);
+      save();
+      render();
+    }
+
+    // 脱离 AI 小改：删除所有已完成任务（控制台调用：clearCompleted()）
+    function clearCompleted() {
+      todos = todos.filter(t => !t.completed);
+      save();
+      render();
+    }
+    function toggleTodo(id) {
+      todos = todos.map(t =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      );
+      save();
+      render();
+    }
+
+    // ===== ④.5 视图状态切换：不需要 save()，刷新回到默认 all =====
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll('.filter-row button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === f);
+      });
+      render();
+    }
+
+    // ===== ⑤ render：根据 todos 整表重画 =====
+    function render() {
+      list.innerHTML = '';
+      const shown = todos.filter(t =>
+        filter === 'all'  ? true  :
+        filter === 'done' ? t.completed : !t.completed
+      );
+      shown.forEach(t => {
+        const li = document.createElement('li');
+        li.dataset.id = t.id;
+        if (t.completed) li.classList.add('done');
+
+        const span = document.createElement('span');
+        span.className = 'text';
+        span.textContent = t.text;
+        li.appendChild(span);
+
+        li.addEventListener('click', () => toggleTodo(t.id));
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'del';
+        delBtn.textContent = '×';
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeTodo(t.id);
+        });
+        li.appendChild(delBtn);
+
+        list.appendChild(li);
+      });
+    }
+
+    // ===== ⑥ 添加按钮事件（含空输入拦截） =====
+    addBtn.addEventListener('click', () => {
       const text = input.value.trim();
       if (text === '') return;
-
-      const li = document.createElement('li');
-      li.textContent = text;
-      list.appendChild(li);
+      addTodo(text);
       input.value = '';
     });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addBtn.click();
+    });
+
+    // 筛选按钮事件
+    document.querySelectorAll('.filter-row button').forEach(btn => {
+      btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+    });
+
+    // 启动时先渲染一次
+    render();
   </script>
 </body>
 </html>
