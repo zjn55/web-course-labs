@@ -183,6 +183,27 @@
       });
     }
 
+    // ===== ⑤.5 事件委托：ul 上只绑一个监听器，三道防御 + 分流 =====
+    list.addEventListener('click', (e) => {
+      // 防御 1：e.target 可能是文本节点，不是 Element
+      if (!(e.target instanceof Element)) return;
+      // 防御 2：closest 可能返回 null（点到空白处）
+      const item = e.target.closest('li');
+      if (!item || !list.contains(item)) return;
+      // 防御 3：dataset.id 可能为空字符串
+      const id = Number(item.dataset.id);
+      if (!id) return;
+
+      // 用 closest 找到删除按钮（哪怕点到按钮内部的文字/图标）
+      const delBtn = e.target.closest('[data-action="delete"]');
+      // 删除与切换互斥：命中删除就只删除，否则才切换
+      if (delBtn && item.contains(delBtn)) {
+        removeTodo(id);
+      } else {
+        toggleTodo(id);
+      }
+    });
+
     // ===== ⑥ 添加按钮事件（含空输入拦截） =====
     addBtn.addEventListener('click', () => {
       const text = input.value.trim();
