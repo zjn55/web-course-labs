@@ -71,6 +71,15 @@
       text-decoration: line-through;
       color: #999;
     }
+    #todoList li .edit {
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #4a90d9;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
     #todoList li .del {
       margin-left: auto;
       border: none;
@@ -145,6 +154,14 @@
       save();
       render();
     }
+    // 编辑：map 生成新数组，只改匹配那一条的 text
+    function updateTodo(id, text) {
+      todos = todos.map(t =>
+        t.id === id ? { ...t, text } : t
+      );
+      save();
+      render();
+    }
 
     // ===== ④.5 视图状态切换：不需要 save()，刷新回到默认 all =====
     function setFilter(f) {
@@ -172,20 +189,51 @@
         span.textContent = t.text;
         li.appendChild(span);
 
-        li.addEventListener('click', () => toggleTodo(t.id));
+        // 编辑按钮
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit';
+        editBtn.dataset.action = 'edit';
+        editBtn.textContent = '编辑';
+        li.appendChild(editBtn);
 
+        // 删除按钮：只标记操作类型，不再绑事件
         const delBtn = document.createElement('button');
         delBtn.className = 'del';
+        delBtn.dataset.action = 'delete';
         delBtn.textContent = '×';
-        delBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          removeTodo(t.id);
-        });
         li.appendChild(delBtn);
 
         list.appendChild(li);
       });
     }
+
+    // ===== ⑤.5 事件委托：ul 上只绑一个监听器，三道防御 + 分流 =====
+    list.addEventListener('click', (e) => {
+      // 防御 1：e.target 可能是文本节点，不是 Element
+      if (!(e.target instanceof Element)) return;
+      // 防御 2：closest 可能返回 null（点到空白处）
+      const item = e.target.closest('li');
+      if (!item || !list.contains(item)) return;
+      // 防御 3：dataset.id 可能为空字符串
+      const id = Number(item.dataset.id);
+      if (!id) return;
+
+      // 用 closest 找到删除按钮（哪怕点到按钮内部的文字/图标）
+      const delBtn = e.target.closest('[data-action="delete"]');
+      const editBtn = e.target.closest('[data-action="edit"]');
+      // 三种操作互斥分流：删除 / 编辑 / 切换
+      if (delBtn && item.contains(delBtn)) {
+        removeTodo(id);
+      } else if (editBtn && item.contains(editBtn)) {
+        // 编辑：弹出输入框，拿当前文本做默认值
+        const todo = todos.find(t => t.id === id);
+        const text = prompt('修改任务', todo ? todo.text : '');
+        // 边界：用户点取消（null）或 trim 后为空，都不改
+        if (text && text.trim()) updateTodo(id, text.trim());
+      } else {
+        toggleTodo(id);
+      }
+    });
 
     // ===== ⑥ 添加按钮事件（含空输入拦截） =====
     addBtn.addEventListener('click', () => {
