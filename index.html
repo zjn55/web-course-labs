@@ -172,15 +172,11 @@
         span.textContent = t.text;
         li.appendChild(span);
 
-        li.addEventListener('click', () => toggleTodo(t.id));
-
+        // 删除按钮：只标记操作类型，不再绑事件
         const delBtn = document.createElement('button');
         delBtn.className = 'del';
+        delBtn.dataset.action = 'delete';
         delBtn.textContent = '×';
-        delBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          removeTodo(t.id);
-        });
         li.appendChild(delBtn);
 
         list.appendChild(li);
